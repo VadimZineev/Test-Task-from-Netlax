@@ -63,4 +63,9 @@ public class CrudController {
         response.setStatus(sectionDAO.delete(section));
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping(value = "/by-code")
+    public ResponseEntity<List<SectionResponse>> findByCode (@RequestParam("code") String code) {
+        return ResponseEntity.ok(sectionDAO.showSectionByCode(code));
+    }
 }

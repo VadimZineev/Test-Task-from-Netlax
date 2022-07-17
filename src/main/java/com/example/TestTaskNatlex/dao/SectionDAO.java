@@ -52,7 +52,8 @@ public class SectionDAO {
             SectionResponse sectionResponse = new SectionResponse();
             sectionResponse.setName(section.getName());
             List<GeoClass> geoClassList = session.createQuery("from GeoClass where sectionId = :id")
-                    .setParameter("id", section.getId()).list();
+                    .setParameter("id", section.getId())
+                    .list();
             List<GeoClassResponse> geoClassResponseList = new ArrayList<>();
             geoClassList.forEach(gc -> {
                 GeoClassResponse geoClassResponse = new GeoClassResponse();
@@ -106,6 +107,37 @@ public class SectionDAO {
             log.info("Element is not found!");
             return ExecutionStatus.SECTION_NOT_FOUND;
         }
+    }
+
+    @Transactional
+    public List<SectionResponse> showSectionByCode(String code) {
+        Session session = sessionFactory.getCurrentSession();
+        List<SectionResponse> sectionResponseList = new ArrayList<>();
+        Query selectSectionId = session.createQuery("from GeoClass where code = :code");
+        selectSectionId.setParameter("code", code);
+        List<GeoClass> geoClassList = selectSectionId.list();
+        geoClassList.forEach(geoClass -> {
+            Query selectSectionById = session.createQuery("from Section where id = :id");
+            selectSectionById.setParameter("id", geoClass.getSectionId());
+            List<Section> sectionList = selectSectionById.list();
+            sectionList.forEach(section -> {
+                SectionResponse sectionResponse = new SectionResponse();
+                sectionResponse.setName(section.getName());
+                List<GeoClass> geoClasses = session.createQuery("from GeoClass where sectionId = :id")
+                        .setParameter("id", section.getId())
+                        .list();
+                List<GeoClassResponse> geoClassResponseList = new ArrayList<>();
+                geoClasses.forEach(gc -> {
+                    GeoClassResponse geoClassResponse = new GeoClassResponse();
+                    geoClassResponse.setName(gc.getName());
+                    geoClassResponse.setCode(gc.getCode());
+                    geoClassResponseList.add(geoClassResponse);
+                });
+                sectionResponse.setGeoClassResponseList(geoClassResponseList);
+                sectionResponseList.add(sectionResponse);
+            });
+        });
+        return sectionResponseList;
     }
 
 }
