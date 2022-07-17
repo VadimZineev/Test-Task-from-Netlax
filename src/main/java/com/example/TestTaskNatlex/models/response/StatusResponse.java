@@ -1,4 +1,4 @@
-package com.example.TestTaskNatlex.models.pojo;
+package com.example.TestTaskNatlex.models.response;
 
 import com.example.TestTaskNatlex.models.enums.ExecutionStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,7 +9,7 @@ import lombok.Data;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({"status", "id"})
-public class ResponsePOJO {
+public class StatusResponse {
 
     @JsonProperty("status")
     private ExecutionStatus status;

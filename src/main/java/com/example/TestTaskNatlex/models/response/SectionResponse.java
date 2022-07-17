@@ -1,4 +1,4 @@
-package com.example.TestTaskNatlex.models.pojo;
+package com.example.TestTaskNatlex.models.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,12 +11,12 @@ import java.util.List;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({"name", "geologicalClasses"})
-public class SectionPOJO {
+public class SectionResponse {
 
     @NotNull
     @JsonProperty("name")
     private String name;
 
     @JsonProperty("geologicalClasses")
-    private List<GeoClassPOJO> geoClassPOJOList;
+    private List<GeoClassResponse> geoClassResponseList;
 }
