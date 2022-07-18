@@ -1,6 +1,7 @@
 package com.example.TestTaskNatlex.dao;
 
 import com.example.TestTaskNatlex.models.enums.ExecutionStatus;
+import com.example.TestTaskNatlex.models.persistence.Attachment;
 import com.example.TestTaskNatlex.models.persistence.GeoClass;
 import com.example.TestTaskNatlex.models.persistence.Section;
 import com.example.TestTaskNatlex.models.response.GeoClassResponse;
@@ -159,5 +160,15 @@ public class SectionDAO {
                 this.save(section);
             }
         });
+    }
+
+    @Transactional
+    public int saveFile(byte[] content, String fileName) {
+        Session session = sessionFactory.getCurrentSession();
+        Attachment attachment = new Attachment();
+        attachment.setContext(content.toString());
+        attachment.setName(fileName);
+        attachment.setStatus(ExecutionStatus.IN_PROGRESS);
+        return (Integer) session.save(attachment);
     }
 }

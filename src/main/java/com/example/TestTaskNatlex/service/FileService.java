@@ -1,14 +1,11 @@
 package com.example.TestTaskNatlex.service;
 
 import com.example.TestTaskNatlex.dao.SectionDAO;
-import com.example.TestTaskNatlex.models.persistence.GeoClass;
-import com.example.TestTaskNatlex.models.persistence.Section;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,16 +26,17 @@ public class FileService {
         this.sectionDAO = sectionDAO;
     }
 
-    public void fileProcessor(MultipartFile multipartFile) throws IOException {
+    public int fileProcessor(MultipartFile multipartFile) throws IOException {
         var file = fileConverter(multipartFile);
         fileParser(file);
+        byte[] content = FileUtils.readFileToByteArray(file);
+        var encodeContent = Base64.getEncoder().encode(content);
+
+        return sectionDAO.saveFile(encodeContent, file.getName());
     }
 
     private void fileParser(File file) throws IOException {
-        HashMap<Section, List<GeoClass>> sectionListMap = new HashMap<>();
-
         HashMap<Integer, List<String>> excelMap = new HashMap<>();
-
         HSSFWorkbook excelBook = new HSSFWorkbook(new FileInputStream(file));
         HSSFSheet excelSheet = excelBook.getSheet("Sheet1");
         excelSheet.forEach(row -> {
@@ -48,7 +46,6 @@ public class FileService {
             });
             excelMap.put(row.getRowNum(), cellList);
         });
-        log.info(excelMap.toString());
         excelMap.remove(0);
         sectionDAO.saveFromFile(excelMap);
     }
@@ -60,6 +57,4 @@ public class FileService {
         fileOutputStream.close();
         return file;
     }
-
-
 }

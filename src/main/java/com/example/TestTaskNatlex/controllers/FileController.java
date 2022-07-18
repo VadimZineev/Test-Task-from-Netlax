@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -26,17 +27,20 @@ public class FileController {
     }
 
     @PostMapping(value = "/import", headers = "content-type=multipart/*")
-    public ResponseEntity<StatusResponse> loadFile(@RequestParam("file") List<MultipartFile> files) {
-        StatusResponse response = new StatusResponse();
+    public ResponseEntity<List<StatusResponse>> loadFile(@RequestParam("file") List<MultipartFile> files) {
+        List<StatusResponse> responseList = new ArrayList<>();
         files.parallelStream().forEach(file -> {
             try {
                 log.info("File name is - {}", file.getOriginalFilename());
-                fileService.fileProcessor(file);
+                StatusResponse response = new StatusResponse();
+                response.setId(fileService.fileProcessor(file));
+                response.setStatus(ExecutionStatus.IN_PROGRESS);
+                responseList.add(response);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
-        response.setStatus(ExecutionStatus.IN_PROGRESS);
-        return ResponseEntity.ok(response);
+        //response.setStatus(ExecutionStatus.IN_PROGRESS);
+        return ResponseEntity.ok(responseList);
     }
 }
