@@ -14,10 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -35,10 +32,14 @@ public class SectionDAO {
         Session session = sessionFactory.getCurrentSession();
         int sectionId = (Integer) session.save(section);
         var geoClassList = section.getGeoClassList();
-        geoClassList.forEach((geoClass) -> {
-            geoClass.setSectionId(sectionId);
-            session.save(geoClass);
-        });
+        try {
+            geoClassList.forEach((geoClass) -> {
+                geoClass.setSectionId(sectionId);
+                session.save(geoClass);
+            });
+        } catch (NullPointerException e) {
+            log.info("GeoClass list is empty!");
+        }
         return sectionId;
     }
 
@@ -140,4 +141,23 @@ public class SectionDAO {
         return sectionResponseList;
     }
 
+    @Transactional
+    public void saveFromFile(HashMap<Integer, List<String>> map) {
+        map.values().forEach(v -> {
+            if (!v.isEmpty()) {
+                Section section = new Section();
+                List<GeoClass> geoClassList = new ArrayList<>();
+                section.setName(v.get(0));
+                v.remove(0);
+                for (int i = 0; i < v.size(); i = i + 2) {
+                    GeoClass geoClass = new GeoClass();
+                    geoClass.setName(v.get(i));
+                    geoClass.setCode(v.get(i + 1));
+                    geoClassList.add(geoClass);
+                }
+                section.setGeoClassList(geoClassList);
+                this.save(section);
+            }
+        });
+    }
 }
