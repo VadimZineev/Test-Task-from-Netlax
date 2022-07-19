@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 @JsonPropertyOrder({"status", "id"})
 @AllArgsConstructor
 @NoArgsConstructor
-public class StatusResponse {
+public class JobResponse {
 
     @JsonProperty("status")
     private ExecutionStatus status;
 
-    @JsonProperty("id")
+    @JsonProperty("job-id")
     private Integer id;
 }

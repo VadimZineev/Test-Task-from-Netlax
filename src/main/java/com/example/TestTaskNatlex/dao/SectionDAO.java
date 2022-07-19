@@ -13,8 +13,6 @@ import org.hibernate.query.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-
 import java.util.*;
 
 @Slf4j
@@ -22,6 +20,7 @@ import java.util.*;
 public class SectionDAO {
 
     private final SessionFactory sessionFactory;
+
 
     @Autowired
     public SectionDAO(SessionFactory sessionFactory) {
@@ -143,12 +142,14 @@ public class SectionDAO {
     }
 
     @Transactional
-    public void saveFromFile(HashMap<Integer, List<String>> map) {
+    public void saveFromFile(HashMap<Integer, List<String>> map, Integer attachmentId) {
+        Session session = sessionFactory.getCurrentSession();
         map.values().forEach(v -> {
             if (!v.isEmpty()) {
                 Section section = new Section();
                 List<GeoClass> geoClassList = new ArrayList<>();
                 section.setName(v.get(0));
+                section.setAttachmentId(attachmentId);
                 v.remove(0);
                 for (int i = 0; i < v.size(); i = i + 2) {
                     GeoClass geoClass = new GeoClass();
@@ -158,17 +159,49 @@ public class SectionDAO {
                 }
                 section.setGeoClassList(geoClassList);
                 this.save(section);
+                Attachment attachment = session.get(Attachment.class, attachmentId);
+                attachment.setStatus(ExecutionStatus.DONE);
+                session.save(attachment);
             }
         });
     }
 
     @Transactional
-    public int saveFile(byte[] content, String fileName) {
+    public int saveFile(String content, String fileName, ExecutionStatus status)  {
         Session session = sessionFactory.getCurrentSession();
         Attachment attachment = new Attachment();
-        attachment.setContext(content.toString());
+        attachment.setContext(content);
         attachment.setName(fileName);
-        attachment.setStatus(ExecutionStatus.IN_PROGRESS);
+        attachment.setStatus(status);
         return (Integer) session.save(attachment);
+    }
+
+    @Transactional
+    public Attachment getAttachmentById(int id) {
+        Session session = sessionFactory.getCurrentSession();
+        return session.get(Attachment.class, id);
+    }
+
+    @Transactional
+    public Optional<Attachment> findAttachmentWithStatusInProgress() {
+        Session session = sessionFactory.getCurrentSession();
+        Query selectAttachmentByStatus = session.createQuery("from Attachment where status = :status");
+        selectAttachmentByStatus.setParameter("status", ExecutionStatus.IN_PROGRESS);
+        return selectAttachmentByStatus.list().stream().findFirst();
+    }
+
+    @Transactional
+    public void updateStatus(Integer id, ExecutionStatus status) {
+        Session session = sessionFactory.getCurrentSession();
+        Attachment attachment = session.get(Attachment.class, id);
+        attachment.setStatus(status);
+        session.save(attachment);
+    }
+
+    @Transactional
+    public ExecutionStatus getAttachmentStatus(Integer id) {
+        Session session = sessionFactory.getCurrentSession();
+        Attachment attachment = session.get(Attachment.class, id);
+        return attachment.getStatus();
     }
 }
