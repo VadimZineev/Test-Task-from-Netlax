@@ -41,7 +41,7 @@ public class FileService {
      */
     @Async(value = "taskExecutor")
     public void fileProcessor() throws InterruptedException {
-        Thread.sleep(10000);
+        Thread.sleep(10000); // only for demonstration
         List<Attachment> attachmentList = jobDAO.findJobWithStatusInProgress();
         attachmentList.parallelStream().forEach(attachment -> {
             File file = reconstructFile(attachment.getContext(), attachment.getName());
@@ -89,6 +89,7 @@ public class FileService {
                 excelMap.put(row.getRowNum(), cellList);
             });
             excelMap.remove(0);
+            file.delete();
         } catch (IOException e) {
             log.info("Wrong File!");
             file.delete();
