@@ -23,7 +23,6 @@ public class SectionDAO {
 
     private final SessionFactory sessionFactory;
 
-
     @Autowired
     public SectionDAO(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -183,13 +182,6 @@ public class SectionDAO {
     public Attachment getAttachmentById(int id) {
         Session session = sessionFactory.getCurrentSession();
         return session.get(Attachment.class, id);
-    }
-
-    @Transactional
-    public boolean getAttachmentStatus(int id) {
-        Session session = sessionFactory.getCurrentSession();
-        Attachment attachment = session.get(Attachment.class, id);
-        return attachment.getStatus().equals(ExecutionStatus.DONE);
     }
 
     @Transactional

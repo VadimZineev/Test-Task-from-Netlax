@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
@@ -74,7 +75,7 @@ public class FileService {
     }
 
     public File fileConverter(MultipartFile multipartFile) throws IOException {
-        File file = new File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
+        File file = new File("src/main/resources/temp/" + Objects.requireNonNull(multipartFile.getOriginalFilename()));
         FileOutputStream fileOutputStream = new FileOutputStream(file);
         fileOutputStream.write(multipartFile.getBytes());
         fileOutputStream.close();
@@ -86,12 +87,14 @@ public class FileService {
         UUIDAndFileMap.forEach((uuid, file) -> {
             try {
                 byte[] fileContent = FileUtils.readFileToByteArray(file);
+                file.delete();
                 String content = Base64.getEncoder().encodeToString(fileContent);
                 int id = sectionDAO.saveFile(content, file.getName(), ExecutionStatus.DONE, uuid);
                 sectionDAO.updateStatusJob(uuid, ExecutionStatus.DONE, false);
                 log.info("new id is: {}", id);
             } catch (IOException e) {
                 log.error(e.getMessage(), e);
+                file.delete();
             }
         });
     }
