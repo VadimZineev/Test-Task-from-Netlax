@@ -1,6 +1,6 @@
 package com.example.TestTaskNatlex.models.persistence;
 
-import com.example.TestTaskNatlex.models.enums.ExecutionStatus;
+import com.example.TestTaskNatlex.enums.ExecutionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,4 +34,7 @@ public class Attachment {
 
     @Column(name = "status")
     private ExecutionStatus status;
+
+    @Column(name = "guid")
+    private String guid;
 }

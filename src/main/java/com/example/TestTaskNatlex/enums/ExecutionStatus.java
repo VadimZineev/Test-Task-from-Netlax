@@ -1,4 +1,4 @@
-package com.example.TestTaskNatlex.models.enums;
+package com.example.TestTaskNatlex.enums;
 
 public enum ExecutionStatus {
     SUCCESS,
@@ -6,5 +6,6 @@ public enum ExecutionStatus {
     ERROR,
     DONE,
     IN_PROGRESS,
-    SECTION_NOT_FOUND
+    SECTION_NOT_FOUND,
+    NOT_STARTED
 }

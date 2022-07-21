@@ -1,21 +1,20 @@
 package com.example.TestTaskNatlex.models.persistence;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.example.TestTaskNatlex.enums.ExecutionStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "section")
-public class Section {
+@Table(name = "job")
+public class Job {
 
     @Id
     @Column(name = "id")
@@ -23,13 +22,14 @@ public class Section {
     private int id;
 
     @Column(name = "name")
-    @JsonProperty("name")
     private String name;
 
-    @Column(name = "attachment_id")
-    private int attachmentId;
+    @Column(name = "status_import")
+    private ExecutionStatus statusImport;
 
-    @OneToMany(mappedBy = "section")
-    @JsonProperty("geologicalClasses")
-    private List<GeoClass> geoClassList;
+    @Column(name = "status_export")
+    private ExecutionStatus statusExport;
+
+    @Column(name = "guid")
+    private String guid;
 }

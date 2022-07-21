@@ -1,6 +1,5 @@
 package com.example.TestTaskNatlex.models.response;
 
-import com.example.TestTaskNatlex.enums.ExecutionStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -10,17 +9,14 @@ import lombok.NoArgsConstructor;
 
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({"status", "id"})
+@JsonPropertyOrder({"message", "id"})
 @AllArgsConstructor
 @NoArgsConstructor
-public class JobResponse {
+public class ExceptionResponse {
 
-    @JsonProperty("file-name")
-    private String name;
+    @JsonProperty
+    private String message;
 
-    @JsonProperty("status")
-    private ExecutionStatus status;
-
-    @JsonProperty("job-id")
+    @JsonProperty
     private Integer id;
 }

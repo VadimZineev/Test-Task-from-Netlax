@@ -1,14 +1,17 @@
 package com.example.TestTaskNatlex.service;
 
 import com.example.TestTaskNatlex.dao.SectionDAO;
-import com.example.TestTaskNatlex.models.enums.ExecutionStatus;
+import com.example.TestTaskNatlex.enums.ExecutionStatus;
 import com.example.TestTaskNatlex.models.persistence.Attachment;
+import com.example.TestTaskNatlex.models.persistence.Job;
 import com.example.TestTaskNatlex.models.response.JobResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,6 +20,7 @@ import java.util.*;
 
 @Slf4j
 @Service
+@EnableAsync
 public class FileService {
 
     private final SectionDAO sectionDAO;
@@ -26,18 +30,32 @@ public class FileService {
         this.sectionDAO = sectionDAO;
     }
 
-    public int fileProcessor() {
-        Optional<Attachment> attachmentInOptional = sectionDAO.findAttachmentWithStatusInProgress();
-        var attachment = attachmentInOptional.get();
-        try {
-            File file = reconstructFile(attachment.getContext(), attachment.getName());
-            var excelMap = fileParser(file);
-            sectionDAO.saveFromFile(excelMap, attachment.getId());
-        } catch (IOException e) {
-            sectionDAO.updateStatus(attachment.getId(), ExecutionStatus.ERROR);
-            throw new RuntimeException(e);
-        }
-        return attachment.getId();
+    @Async
+    public void fileProcessor() throws InterruptedException {
+        Thread.sleep(10000);
+        List<Attachment> attachmentList = sectionDAO.findJobWithStatusInProgress();
+        attachmentList.parallelStream().forEach(attachment -> {
+            try {
+                File file = reconstructFile(attachment.getContext(), attachment.getName());
+                var excelMap = fileParser(file);
+                sectionDAO.saveFromFile(excelMap, attachment.getId());
+                sectionDAO.updateStatusJob(attachment.getGuid(), ExecutionStatus.DONE, true);
+            } catch (IOException e) {
+                sectionDAO.updateStatusJob(attachment.getGuid(), ExecutionStatus.ERROR, true);
+            }
+        });
+    }
+
+    public List<JobResponse> getListIdJob() {
+        List<JobResponse> responseList = new ArrayList<>();
+        var jobList = sectionDAO.findAttachmentWithStatusNotStarted();
+        jobList.forEach(job -> {
+            JobResponse response = new JobResponse();
+            response.setId(job.getId());
+            response.setStatus(job.getStatusExport());
+            responseList.add(response);
+        });
+        return responseList;
     }
 
     private HashMap<Integer, List<String>> fileParser(File file) throws IOException {
@@ -63,12 +81,28 @@ public class FileService {
         return file;
     }
 
-    public int addFile(MultipartFile multipartFile) throws IOException {
-        var file = fileConverter(multipartFile);
-        byte[] fileContent = FileUtils.readFileToByteArray(file);
-        String content = Base64.getEncoder().encodeToString(fileContent);
-        var id = sectionDAO.saveFile(content, file.getName(), ExecutionStatus.IN_PROGRESS);
-        return id;
+    @Async(value = "taskExecutor")
+    public void addFiles(HashMap<String, File> UUIDAndFileMap) {
+        UUIDAndFileMap.forEach((uuid, file) -> {
+            try {
+                byte[] fileContent = FileUtils.readFileToByteArray(file);
+                String content = Base64.getEncoder().encodeToString(fileContent);
+                int id = sectionDAO.saveFile(content, file.getName(), ExecutionStatus.DONE, uuid);
+                sectionDAO.updateStatusJob(uuid, ExecutionStatus.DONE, false);
+                log.info("new id is: {}", id);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+            }
+        });
+    }
+
+    public JobResponse createJob(String uuid, String name) {
+        JobResponse response = new JobResponse();
+        int id = sectionDAO.getIdJob(uuid, name);
+        response.setName(name);
+        response.setId(id);
+        log.info("Job is [{}]", response);
+        return response;
     }
 
     public File findFile(Integer id) {
@@ -89,5 +123,23 @@ public class FileService {
 
     public ExecutionStatus checkStatus(Integer id) {
         return sectionDAO.getAttachmentStatus(id);
+    }
+
+    public Job checkStatusParse(Integer id) {
+        return sectionDAO.getJob(id);
+    }
+
+    public HashMap<String, File> toMap(List<MultipartFile> multipartFiles) {
+        HashMap<String, File> map = new HashMap<>();
+        multipartFiles.forEach(multipartFile -> {
+            UUID uuid = UUID.randomUUID();
+            try {
+                var file = fileConverter(multipartFile);
+                map.put(uuid.toString(), file);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return map;
     }
 }

@@ -1,7 +1,7 @@
 package com.example.TestTaskNatlex.controllers;
 
 import com.example.TestTaskNatlex.dao.SectionDAO;
-import com.example.TestTaskNatlex.models.enums.ExecutionStatus;
+import com.example.TestTaskNatlex.enums.ExecutionStatus;
 import com.example.TestTaskNatlex.models.persistence.Section;
 import com.example.TestTaskNatlex.models.response.SectionResponse;
 import com.example.TestTaskNatlex.models.response.StatusResponse;

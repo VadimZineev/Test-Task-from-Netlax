@@ -1,6 +1,6 @@
 package com.example.TestTaskNatlex.models.response;
 
-import com.example.TestTaskNatlex.models.enums.ExecutionStatus;
+import com.example.TestTaskNatlex.enums.ExecutionStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

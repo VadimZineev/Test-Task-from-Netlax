@@ -1,8 +1,8 @@
 package com.example.TestTaskNatlex.controllers;
 
-import com.example.TestTaskNatlex.models.enums.ExecutionStatus;
+import com.example.TestTaskNatlex.enums.ExecutionStatus;
+import com.example.TestTaskNatlex.models.response.ExceptionResponse;
 import com.example.TestTaskNatlex.models.response.JobResponse;
-import com.example.TestTaskNatlex.scheduler.ScheduleForFileProcessing;
 import com.example.TestTaskNatlex.service.FileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,55 +22,70 @@ public class FileController {
 
     private final FileService fileService;
 
-    private final ScheduleForFileProcessing schedule;
-
     @Autowired
-    public FileController(FileService fileService, ScheduleForFileProcessing schedule) {
+    public FileController(FileService fileService) {
         this.fileService = fileService;
-        this.schedule = schedule;
     }
 
     @PostMapping(value = "/import", consumes = "multipart/form-data", produces = "application/json")
     public List<JobResponse> postJobWithFile(@RequestParam("file") List<MultipartFile> files) {
-        List<JobResponse> responseList = new ArrayList<>();
-        files.parallelStream().forEach(multipartFile -> {
-            try {
-                var id = fileService.addFile(multipartFile);
-                responseList.add(new JobResponse(ExecutionStatus.IN_PROGRESS, id));
-                Thread.sleep(1);
-            } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        var UUIDAndFilesMap = fileService.toMap(files);
+        List<JobResponse> jobResponseList = new ArrayList<>();
+        UUIDAndFilesMap.forEach((uuid, file) -> {
+            var job = fileService.createJob(uuid, file.getName());
+            jobResponseList.add(job);
         });
-        schedule.scheduleFileProcessor();
-        return responseList;
+        fileService.addFiles(UUIDAndFilesMap);
+        return jobResponseList;
     }
 
     @GetMapping(value = "/import")
     public JobResponse getStatusJob(@RequestParam("id") Integer id) {
-        return new JobResponse(fileService.checkStatus(id), id);
+        ExecutionStatus status;
+        try {
+            status = fileService.checkStatus(id);
+        } catch (NullPointerException e) {
+            status = ExecutionStatus.ERROR;
+        }
+        log.info(status.name());
+        return new JobResponse(null, status, id);
     }
 
-
-//    @Autowired
-//    TaskScheduler taskScheduler;
-//    ScheduledFuture<?> scheduledFuture;
-//    @RequestMapping(value = "start", method = RequestMethod.GET)
-//    public void start() throws Exception {
-//        scheduledFuture = taskScheduler.scheduleAtFixedRate(m_sampletask.work(), FIXED_RATE);
-//    }
-
     @GetMapping(value = "/export")
-    public @ResponseBody ResponseEntity getFileById(@RequestParam("id") Integer id) {
+    public List<JobResponse> getAllJobIdAndStartExport() throws InterruptedException {
+        var listJob = fileService.getListIdJob();
+        fileService.fileProcessor();
+        return listJob;
+    }
+
+    @GetMapping(value = "/export/{id}")
+    public JobResponse getResultJobById(@PathVariable("id") Integer id) {
+        JobResponse response = new JobResponse();
+        var job = fileService.checkStatusParse(id);
+        response.setId(job.getId());
+        response.setName(job.getName());
+        response.setStatus(job.getStatusExport());
+        return response;
+    }
+
+    @GetMapping(value = "/export/{id}/file")
+    public ResponseEntity getFileById(@PathVariable("id") Integer id) {
         try {
-            File file = fileService.findFile(id);
-            return ResponseEntity.ok()
-                    .header("Content-Disposition", "attachment; filename=" + file.getName())
-                    .contentLength(file.length())
-                    .contentType(MediaType.parseMediaType("multipart/form-data"))
-                    .body(new FileSystemResource(file));
+            var job = fileService.checkStatusParse(id);
+            if (!job.getStatusExport().equals(ExecutionStatus.IN_PROGRESS)) {
+                File file = fileService.findFile(id);
+                return ResponseEntity.ok()
+                        .header("Content-Disposition", "attachment; filename=" + file.getName())
+                        .contentLength(file.length())
+                        .contentType(MediaType.parseMediaType("multipart/form-data"))
+                        .body(new FileSystemResource(file));
+            } else {
+                return ResponseEntity.status(HttpStatus.LOCKED)
+                        .body(new ExceptionResponse("Sorry! But this Job is IN_PROGRESS now. Please, try again later", job.getId()));
+            }
         } catch (NullPointerException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ExceptionResponse("File with job_id is not found!", id));
         }
     }
 }
