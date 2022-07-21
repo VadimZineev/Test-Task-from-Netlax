@@ -22,6 +22,10 @@ import javax.servlet.MultipartConfigElement;
 import javax.sql.DataSource;
 import java.util.Properties;
 
+
+/**
+ * Configuration for hibernate and multipart(for multipart files)
+ */
 @Configuration
 @PropertySource("classpath:hibernate.properties")
 @EnableTransactionManagement

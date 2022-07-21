@@ -16,6 +16,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Rest Controller for working with XLS files
+ */
 @Slf4j
 @RestController
 public class FileController {

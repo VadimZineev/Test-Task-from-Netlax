@@ -8,6 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configuration for Security (Basic Auth)
+ */
 @Configuration
 public class SecurityConfig {
     @Bean
@@ -23,7 +26,7 @@ public class SecurityConfig {
     @Bean
     public InMemoryUserDetailsManager userDetailsService() {
         UserDetails user = User
-                .withUsername("user")
+                .withUsername("username")
                 .password("{noop}password")
                 .roles("USER")
                 .build();

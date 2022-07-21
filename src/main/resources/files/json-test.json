@@ -1,0 +1,8 @@
+{
+  "name": "Section 1",
+  "geologicalClasses": [
+    {"name": "Geo Class 11", "code": "GC11"},
+    {"name": "Geo Class 12", "code": "GC12" },
+    {"name": "Geo Class 13", "code": "GC13" }
+  ]
+}

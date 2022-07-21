@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.List;
 
+/**
+ * Rest Controller for working with JSON files (CRUD)
+ */
 @Slf4j
 @RestController
 @RequestMapping("/sections")
@@ -25,6 +28,7 @@ public class CrudController {
     public CrudController(SectionDAO sectionDAO) {
         this.sectionDAO = sectionDAO;
     }
+
     @PostMapping
     public ResponseEntity<StatusResponse> create(@Valid @RequestBody Section section, BindingResult bindingResult) {
         StatusResponse response = new StatusResponse();
